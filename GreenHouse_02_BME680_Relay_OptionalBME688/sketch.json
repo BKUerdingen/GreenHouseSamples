@@ -1,0 +1,35 @@
+{
+  "cpu": {
+    "fqbn": "arduino:samd:mkrwifi1010",
+    "name": "Arduino MKR WiFi 1010",
+    "type": "serial"
+  },
+  "secrets": [
+    {
+      "name": "SECRET_OPTIONAL_PASS",
+      "value": ""
+    },
+    {
+      "name": "SECRET_SSID",
+      "value": ""
+    }
+  ],
+  "included_libs": [
+    {
+      "name": "BME680",
+      "version": "1.0.10"
+    },
+    {
+      "name": "Arduino_MKRIoTCarrier",
+      "version": "2.1.0"
+    },
+    {
+      "name": "ArduinoIoTCloud",
+      "version": "2.10.0"
+    },
+    {
+      "name": "Arduino_ConnectionHandler",
+      "version": "1.3.0"
+    }
+  ]
+}
