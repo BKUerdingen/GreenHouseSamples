@@ -5,7 +5,7 @@
 #include <ArduinoIoTCloud.h>
 #include <Arduino_ConnectionHandler.h>
 
-const char THING_ID[] = "013ea591-7efa-40f5-8c20-59f44122faeb"; // Enter your own Thing ID for local Cloud use.
+const char THING_ID[] = ""; // Enter your own Thing ID for local Cloud use.
 const char SSID[] = SECRET_SSID;
 const char PASS[] = SECRET_OPTIONAL_PASS;
 

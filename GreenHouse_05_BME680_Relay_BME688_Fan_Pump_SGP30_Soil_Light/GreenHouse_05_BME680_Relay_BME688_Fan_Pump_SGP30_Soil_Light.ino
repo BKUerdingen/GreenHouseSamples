@@ -11,7 +11,7 @@
   Krefeld, Germany, and Colegiul Tehnic "Costin D. Nenițescu" Pitești, Romania.
 */
 #ifndef ENABLE_SECOND_TH
-#define ENABLE_SECOND_TH 0  // Optional onboard BME688: change 0 to 1.
+#define ENABLE_SECOND_TH 1  // Optional onboard BME688: change 0 to 1.
 #endif
 #include <Wire.h>
 #include <Arduino_MKRIoTCarrier.h>
@@ -21,7 +21,7 @@
 #include <Adafruit_SGP30.h>
 
 // ===================== Hardware test settings =====================
-const bool CLOUD_ENABLED = false;       // Set to true only after configuring the Thing
+const bool CLOUD_ENABLED = true;       // Set to true only after configuring the Thing
 const unsigned long SERIAL_BAUD = 9600;
 const unsigned long SERIAL_WAIT_MS = 3000;
 const unsigned long MEASUREMENT_INTERVAL_MS = 1000; // SGP30 requires approximately 1 Hz!
