@@ -105,7 +105,7 @@ The second sensor is the **onboard BME688**, so no additional external module is
 1. Leave `ENABLE_SECOND_TH` at `1` for onboard readings, or set it to `0` to disable them.
 2. Install Arduino_MKRIoTCarrier and its dependencies (already required in this lesson).
 3. If using Cloud, add `temperature2` and `humidity2` as `float`, Read Only, updated every 3 seconds.
-4. Upload again. Second-sensor readings appear every 3 seconds.
+4. Upload again. Second-sensor values update every 3 seconds; the latest values appear in every serial measurement block.
 
 With the option set to 0, these two properties are not registered with Cloud and need not exist in the Thing. Remove them from the Thing if you previously added them and want the minimal configuration again. The optional code is guarded by `#if ENABLE_SECOND_TH` so the generated Cloud header can omit these variables.
 
@@ -200,6 +200,14 @@ Open Serial Monitor at **9600 baud**. Commands are case-sensitive; line endings 
 
 Sensor readings, requested actuator states, initialization failures, touch actions, page changes, and Cloud/Wi-Fi status changes are reported through Serial.
 
+## Fixed serial measurement blocks
+
+Each measurement cycle prints **nine lines in the same order**: a header, onboard BME688, SGP30, three external BME680 lines (temperature/humidity, pressure/gas resistance, gas status), soil, light, and requested actuator states.
+
+The onboard BME688 is still read every three seconds. Its latest cached temperature and humidity are printed in every measurement cycle, including the intervening cycles. Before the first reading or after a failed read, missing values appear as `--`. With `ENABLE_SECOND_TH = 0`, its row says `disabled` instead of disappearing. Other unavailable sensors also retain their rows with placeholders.
+
+The serial formatting update compiles successfully for the MKR WiFi 1010 with the current project settings. The shorter BME680 lines reduce terminal wrapping. Keep the Serial Monitor wide enough for at least 80 characters. Startup messages, explicit commands, actuator changes, page changes and Cloud/network events remain separate event messages and may add lines between measurement blocks.
+
 ## Dark-display diagnostics
 
 The screen is explicitly reinitialized after Carrier, sensor and Cloud setup. Subsequent display transfers use a conservative **4 MHz SPI clock**. This is a recovery and diagnostic measure; compilation alone does not establish the cause of a dark screen.
@@ -233,7 +241,7 @@ Compiled successfully for `arduino:samd:mkrwifi1010` with Arduino SAMD Boards **
 
 The previous display version worked after the user replaced the Carrier; the original dark-screen fault was therefore traced to the original Carrier hardware. Touch input also worked during the investigation.
 
-The larger-text revision compiles with the current Cloud-enabled configuration: **206,368 bytes flash (78%)** and **10,604 bytes static RAM (32%)**. Layout checks passed for all twelve page titles/footers, seven size-2 body rows within the circular display, page wraparound, full 36-character IDs, a 32-character SSID, and boundary values in the overview. A software preview using the installed Adafruit font was also inspected. Its visual readability must still be confirmed on the replacement Carrier. Actual actuator operation and complete live Cloud behavior require the acceptance checks above.
+The larger-text revision compiles with the current Cloud-enabled configuration: **206,368 bytes flash (78%)** and **10,604 bytes static RAM (32%)**. Layout checks passed for all twelve page titles/footers, seven size-2 body rows within the circular display, page wraparound, full 36-character IDs, a 32-character SSID, and boundary values in the overview. A software preview using the installed Adafruit font was also inspected. Those build sizes describe the display revision before the serial formatting update. Its visual readability must still be confirmed on the replacement Carrier. Actual actuator operation and complete live Cloud behavior require the acceptance checks above.
 
 ## References
 

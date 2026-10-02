@@ -196,6 +196,7 @@ void readSensors() {
 #if ENABLE_SECOND_TH
   readSecondTH();
 #endif
+  printSecondTH(); // Always reserve one row, including between sensor updates.
   // Read the SGP30 regularly, once per second.
   if (sgpReady && sgp.IAQmeasure()) {
     eCO2 = sgp.eCO2;
@@ -205,7 +206,7 @@ void readSensors() {
   } else {
     eCO2 = INVALID_RAW_READING;
     tvoc = INVALID_RAW_READING;
-    Serial.println("SGP30: no reading");
+    Serial.println("SGP30: eCO2 = -- ppm, TVOC = -- ppb");
   }
 
   if (bmeReady && i2cPresent(BME_I2C_ADDRESS) && !bme.measuring()) {
@@ -219,15 +220,18 @@ void readSensors() {
     gasResistance = gasOhm;
     Serial.print("BME680: temperature = "); Serial.print(temperature);
     Serial.print(" C, humidity = "); Serial.print(humidity);
-    Serial.print(" %, pressure = "); Serial.print(pressurePa / 100.0f);
-    Serial.print(" hPa, gas resistance = "); Serial.print(gasOhm);
-    Serial.print(" Ohm, gas status = 0x"); Serial.println(gasStatus, HEX);
+    Serial.println(" %");
+    Serial.print("BME680: pressure = "); Serial.print(pressure);
+    Serial.print(" hPa, gas = "); Serial.print(gasOhm); Serial.println(" Ohm");
+    Serial.print("BME680: gas status = 0x"); Serial.println(gasStatus, HEX);
   } else {
     temperature = INVALID_MEASUREMENT;
     humidity = INVALID_MEASUREMENT;
     pressure = INVALID_MEASUREMENT;
     gasResistance = INVALID_MEASUREMENT;
-    Serial.println("BME680: no reading (unavailable or still measuring)");
+    Serial.println("BME680: temperature = -- C, humidity = -- %");
+    Serial.println("BME680: pressure = -- hPa, gas = -- Ohm");
+    Serial.println("BME680: gas status = -- (no reading)");
   }
 
   soilRaw = analogRead(SOIL_PIN);
@@ -236,13 +240,13 @@ void readSensors() {
     int red, green, blue, clear;
     carrier.Light.readColor(red, green, blue, clear);
     lightLevel = clear;
-    Serial.print("Light (raw values): R = "); Serial.print(red);
+    Serial.print("Light: R = "); Serial.print(red);
     Serial.print(", G = "); Serial.print(green);
     Serial.print(", B = "); Serial.print(blue);
-    Serial.print(", brightness/clear = "); Serial.println(clear);
+    Serial.print(", clear = "); Serial.println(clear);
   } else {
     lightLevel = INVALID_RAW_READING;
-    Serial.println("Light: no new reading");
+    Serial.println("Light: R = --, G = --, B = --, clear = --");
   }
 }
 
@@ -351,12 +355,25 @@ void readSecondTH() {
     // The Carrier library maintains its own measurement timing and cached values.
     temperature2 = carrier.Env.readTemperature();
     humidity2 = carrier.Env.readHumidity();
-    Serial.print("Onboard BME688: temperature = "); Serial.print(temperature2);
-    Serial.print(" C, humidity = "); Serial.print(humidity2); Serial.println(" %");
   } else {
     temperature2 = INVALID_MEASUREMENT;
     humidity2 = INVALID_MEASUREMENT;
-    Serial.println("Second T/H sensor: no reading");
   }
 }
 #endif
+
+// Print the latest cached values every cycle; reading still follows its 3 s timer.
+// Missing/disabled readings occupy the same single row as valid values.
+void printSecondTH() {
+#if ENABLE_SECOND_TH
+  Serial.print("Onboard BME688: temperature = ");
+  if (isfinite(temperature2) && temperature2 != INVALID_MEASUREMENT) Serial.print(temperature2);
+  else Serial.print("--");
+  Serial.print(" C, humidity = ");
+  if (isfinite(humidity2) && humidity2 != INVALID_MEASUREMENT) Serial.print(humidity2);
+  else Serial.print("--");
+  Serial.println(" %");
+#else
+  Serial.println("Onboard BME688: disabled");
+#endif
+}

@@ -52,7 +52,7 @@ The second sensor is the **onboard BME688**, so no additional external module is
 1. Change `#define ENABLE_SECOND_TH 0` near the top of the sketch to `1`.
 2. Install Arduino_MKRIoTCarrier and its dependencies (already required in this lesson).
 3. If using Cloud, add `temperature2` and `humidity2` as `float`, Read Only, updated every 3 seconds.
-4. Upload again. Second-sensor readings appear every 3 seconds.
+4. Upload again. Second-sensor values update every 3 seconds; the latest values appear in every serial measurement block.
 
 With the option set to 0, these two properties are not registered with Cloud and need not exist in the Thing. Remove them from the Thing if you previously added them and want the minimal configuration again. The optional code is guarded by `#if ENABLE_SECOND_TH` so the generated Cloud header can omit these variables.
 
@@ -126,6 +126,14 @@ SGP30 values are **eCO2 in ppm** (a calculated equivalent, not a direct CO2 meas
 Soil moisture is a raw ADC reading, not a calibrated percentage. Record dry/wet values before adding your own conversion. An unconnected analog input can float; `analogRead()` cannot detect a disconnected sensor.
 
 The BME680's gas resistance is **not a VOC concentration**. Pressure is converted from Pa to hPa. RGB/clear values are raw readings, not lux. Cloud receives the clear channel as `lightLevel`; RGB channels remain serial-only. Bus scans identify responding addresses, not sensor types, and cannot detect two devices sharing one address. Scans and network connection work may interrupt the nominal SGP30 measurement interval.
+
+## Fixed serial measurement blocks
+
+Each measurement cycle prints **nine lines in the same order**: a header, onboard BME688, SGP30, three external BME680 lines (temperature/humidity, pressure/gas resistance, gas status), soil, light, and requested actuator states.
+
+The onboard BME688 is still read every three seconds. Its latest cached temperature and humidity are printed in every measurement cycle, including the intervening cycles. Before the first reading or after a failed read, missing values appear as `--`. With `ENABLE_SECOND_TH = 0`, its row says `disabled` instead of disappearing. Other unavailable sensors also retain their rows with placeholders.
+
+The serial formatting update compiles successfully for the MKR WiFi 1010 with the current project settings. The shorter BME680 lines reduce terminal wrapping. Keep the Serial Monitor wide enough for at least 80 characters. Startup messages, explicit commands, actuator changes, page changes and Cloud/network events remain separate event messages and may add lines between measurement blocks.
 
 ## Arduino Cloud
 
