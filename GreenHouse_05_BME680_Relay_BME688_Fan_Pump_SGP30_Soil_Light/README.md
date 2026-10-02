@@ -141,6 +141,30 @@ polls briefly until the conversion is ready, with an upper waiting limit of
 `LIGHT_READ_TIMEOUT_MS` (100 ms), and checks whether `readColor()` succeeds.
 No new Cloud variables or callbacks are needed.
 
+**Cloud and the shared I2C bus:** On the MKR WiFi 1010, the installed
+ArduinoECCX08 library can leave the shared Wire bus at **1 MHz** after accessing
+the security chip for Cloud authentication or random numbers. The APDS9960
+supports at most **400 kHz**. An I2C address acknowledgement alone does not prove
+that register reads work at that speed; the symptom can be a persistent
+`measurement timeout` even though the sensor responds at address 0x39.
+
+The sketch restores `I2C_CLOCK_HZ` (**100 kHz**) after `ArduinoCloud.begin()` and
+every `ArduinoCloud.update()`. The `i2cPresent()` helper also restores this speed
+before device access, including motor commands invoked by Cloud callbacks.
+Keep these calls when copying the sketch into Arduino Cloud. Increasing the
+light timeout does not correct an excessive I2C clock rate.
+
+Hardware check (2026-10-02): a temporary Cloud-enabled sample 6 build using the
+Teacher configuration was uploaded to the MKR WiFi 1010. Before this change,
+the light sensor timed out every cycle. After the change, all 20 observed
+cycles returned RGB/clear readings (clear counts 368 to 394), without a
+timeout. Sample 5 and both the template and Teacher configurations of sample 6
+compiled successfully. Sample 5 was not separately uploaded. The SGP30 was
+disconnected during this check, so its missing readings were expected.
+
+References: [ArduinoECCX08 source](https://github.com/arduino-libraries/ArduinoECCX08/blob/master/src/ECCX08.cpp)
+and [APDS9960 datasheet](https://content.arduino.cc/assets/Nano_BLE_Sense_av02-4191en_ds_apds-9960.pdf).
+
 The serial output keeps one light row per measurement cycle. A missing sensor,
 conversion timeout, or failed I2C read is identified on that row and sets
 `lightLevel` to `-1`. A valid zero is a real reading, not an error. To test,

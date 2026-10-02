@@ -231,6 +231,7 @@ void setup() {
   if (CLOUD_ENABLED) {
     initProperties();
     ArduinoCloud.begin(ArduinoIoTPreferredConnection);
+    Wire.setClock(I2C_CLOCK_HZ); // ECCX08 Cloud authentication can leave Wire at 1 MHz.
     setDebugMessageLevel(2);
     ArduinoCloud.printDebugInfo();
     Serial.println("Cloud: connecting; hardware testing continues.");
@@ -249,6 +250,7 @@ void setup() {
 void loop() {
   if (CLOUD_ENABLED) {
     ArduinoCloud.update();
+    Wire.setClock(I2C_CLOCK_HZ); // Restore sensor bus speed after Cloud/ECCX08 access.
     const bool connected = ArduinoCloud.connected();
     if (connected != cloudWasConnected) {
       Serial.println(connected ? "Cloud: connected" : "Cloud: disconnected");
@@ -419,6 +421,8 @@ void readSerialCommand() {
 }
 
 bool i2cPresent(uint8_t address) {
+  // Also protects motor commands called from inside ArduinoCloud.update().
+  Wire.setClock(I2C_CLOCK_HZ);
   Wire.beginTransmission(address);
   return Wire.endTransmission() == 0;
 }
