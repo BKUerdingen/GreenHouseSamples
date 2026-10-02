@@ -21,7 +21,7 @@
 #include <Grove_I2C_Motor_Driver.h>
 
 // Hardware and initial settings
-const bool CLOUD_ENABLED = false; // Set to true after configuring your Thing.
+const bool CLOUD_ENABLED = true; // Set to true after configuring your Thing.
 const unsigned long SERIAL_BAUD = 9600;
 const unsigned long SERIAL_WAIT_MS = 3000;
 const unsigned long MEASUREMENT_INTERVAL_MS = 1000;
