@@ -26,6 +26,7 @@ const unsigned long SERIAL_BAUD = 9600;
 const unsigned long SERIAL_WAIT_MS = 3000;
 const unsigned long MEASUREMENT_INTERVAL_MS = 1000; // SGP30 requires approximately 1 Hz!
 const uint32_t I2C_CLOCK_HZ = 100000;
+const unsigned long LIGHT_READ_TIMEOUT_MS = 100; // Allow APDS9960 integration to finish
 
 const uint8_t SOIL_PIN = A0;
 const uint8_t LIGHT_RELAY_PIN = 2;       // Carrier Rev2: relay 2
@@ -236,9 +237,28 @@ void readSensors() {
 
   soilRaw = analogRead(SOIL_PIN);
   Serial.print("Soil moisture: raw ADC value = "); Serial.println(soilRaw);
-  if (lightReady && i2cPresent(LIGHT_I2C_ADDRESS) && carrier.Light.colorAvailable()) {
-    int red, green, blue, clear;
-    carrier.Light.readColor(red, green, blue, clear);
+  readLightSensor();
+}
+
+// APDS9960 colorAvailable() starts a conversion; readColor() stops it again.
+// Wait briefly for a fresh reading instead of treating "still measuring" as failure.
+void readLightSensor() {
+  int red, green, blue, clear;
+  bool readOk = false;
+  const char* error = "sensor unavailable at 0x39";
+  if (lightReady && i2cPresent(LIGHT_I2C_ADDRESS)) {
+    error = "measurement timeout";
+    const unsigned long startedMs = millis();
+    do {
+      if (carrier.Light.colorAvailable()) {
+        readOk = carrier.Light.readColor(red, green, blue, clear);
+        error = "I2C read failed";
+        break;
+      }
+      delay(1);
+    } while (millis() - startedMs < LIGHT_READ_TIMEOUT_MS);
+  }
+  if (readOk) {
     lightLevel = clear;
     Serial.print("Light: R = "); Serial.print(red);
     Serial.print(", G = "); Serial.print(green);
@@ -246,7 +266,7 @@ void readSensors() {
     Serial.print(", clear = "); Serial.println(clear);
   } else {
     lightLevel = INVALID_RAW_READING;
-    Serial.println("Light: R = --, G = --, B = --, clear = --");
+    Serial.print("Light: R/G/B/clear = --; "); Serial.println(error);
   }
 }
 

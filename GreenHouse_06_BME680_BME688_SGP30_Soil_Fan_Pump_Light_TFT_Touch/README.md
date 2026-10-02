@@ -200,6 +200,27 @@ Open Serial Monitor at **9600 baud**. Commands are case-sensitive; line endings 
 
 Sensor readings, requested actuator states, initialization failures, touch actions, page changes, and Cloud/Wi-Fi status changes are reported through Serial.
 
+## Light sensor readings
+
+The onboard APDS9960 uses I2C address **0x39**. In the sketch, `readSensors()`
+calls `readLightSensor()`, which assigns the sensor's clear channel to the
+Cloud variable **`lightLevel`** (`int`, Read Only). This is a raw light count,
+not lux. The separate Boolean variable `light` controls the light relay.
+
+The Arduino_APDS9960 library starts a conversion in `colorAvailable()` and
+disables it after `readColor()`. Checking availability only once immediately
+after restarting a conversion can therefore report no reading. The sketch
+polls briefly until the conversion is ready, with an upper waiting limit of
+`LIGHT_READ_TIMEOUT_MS` (100 ms), and checks whether `readColor()` succeeds.
+No new Cloud variables or callbacks are needed.
+
+The serial output keeps one light row per measurement cycle. A missing sensor,
+conversion timeout, or failed I2C read is identified on that row and sets
+`lightLevel` to `-1`. A valid zero is a real reading, not an error. To test,
+cover and uncover the sensor and watch `clear` in Serial and `lightLevel` in
+Cloud (and the light pages in sample 6). If unavailable, check the startup
+message `Light sensor @ 0x39: OK` and use the `i` command to scan the I2C bus.
+
 ## Fixed serial measurement blocks
 
 Each measurement cycle prints **nine lines in the same order**: a header, onboard BME688, SGP30, three external BME680 lines (temperature/humidity, pressure/gas resistance, gas status), soil, light, and requested actuator states.
